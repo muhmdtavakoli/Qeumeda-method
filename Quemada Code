@@ -1,0 +1,29 @@
+#include "udf.h"
+
+#define mu_p 0.00123   // Plasma viscosity in Pa.s 
+#define H_ct 0.35      // Hematocrit level as per time
+#define k_0 3.2        // Constant k_0 for the Quemada model 
+#define k_inf 1.8      // Constant k_inf for the Quemada model 
+#define gamma_c 10.0   // Critical shear rate 
+
+DEFINE_PROPERTY(cell_viscosity,c,t)
+{
+    real shear_rate;
+    real mu;
+    real k;
+    real sqrt_gamma_ratio;
+
+    // Calculate the shear rate in the cell
+    shear_rate = C_STRAIN_RATE_MAG(c,t);
+
+    // Calculate the square root of the ratio of the shear rate to the critical shear rate
+    sqrt_gamma_ratio = sqrt(shear_rate/gamma_c);
+
+    // Calculate the k factor for the Quemada model
+    k = (k_0 + k_inf * sqrt_gamma_ratio) / (1 + sqrt_gamma_ratio);
+
+    // Calculate the blood viscosity using the Quemada model
+    mu = mu_p / pow((1 - 0.5 * k * H_ct), 2);
+
+    return mu;
+}
